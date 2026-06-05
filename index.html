@@ -670,14 +670,17 @@ function updateSummary(picked, discount, specialMeta, show10, showBanner){
   // Clause
   let cw = "";
   if(show10){
-    cw += `<div class="clause"><span class="eq">↗</span><span>Once monthly ad spend exceeds <b>$15,000</b>, Meta Ads management moves to <b>10% of ad spend</b> — so our fee scales only as your results do.</span></div>`;
+    const metaFlat = (specialMeta > 0) ? specialMeta : 1500;
+    const threshold = metaFlat * 10;
+    const thresholdTick = `$${threshold/1000}k`;
+    cw += `<div class="clause"><span class="eq">↗</span><span>Once monthly ad spend exceeds <b>${money(threshold)}</b>, Meta Ads management moves to <b>10% of ad spend</b> — so our fee scales only as your results do.</span></div>`;
     if(showBanner){
       cw += `<div class="calc"><div class="calc-grid">
-        <div><div class="label">Monthly ad spend</div><div class="spendval" id="spendVal">$15,000</div>
-          <input type="range" id="slider" min="1000" max="50000" step="500" value="15000"/>
-          <div class="ticks"><span>$1k</span><span>$15k</span><span>$30k</span><span>$50k</span></div></div>
+        <div><div class="label">Monthly ad spend</div><div class="spendval" id="spendVal">${money(threshold)}</div>
+          <input type="range" id="slider" min="1000" max="50000" step="500" value="${threshold}" data-flat="${metaFlat}"/>
+          <div class="ticks"><span>$1k</span><span>${thresholdTick}</span><span>$30k</span><span>$50k</span></div></div>
         <div class="calc-out"><div class="ol">Meta Ads management fee</div>
-          <div class="fee grad-text" id="feeVal">$1,500<small>/mo</small></div></div>
+          <div class="fee grad-text" id="feeVal">${money(metaFlat)}<small>/mo</small></div></div>
       </div></div>`;
     }
   }
@@ -692,8 +695,9 @@ function updateMetaNotice(picked){
 function initCalc(){
   const slider = $("#slider");
   if(!slider) return;
+  const flatFee = parseFloat(slider.dataset.flat) || 1500;
   const upd = () => {
-    const s = +slider.value, fee = Math.max(1500, s*0.10);
+    const s = +slider.value, fee = Math.max(flatFee, s*0.10);
     $("#spendVal").textContent = money(s);
     $("#feeVal").innerHTML = money(fee)+"<small>/mo</small>";
     const pct = ((s-slider.min)/(slider.max-slider.min))*100;
