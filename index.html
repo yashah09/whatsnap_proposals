@@ -319,7 +319,7 @@ const TEMPLATES = {
     price:1500, unit:"month", setupFee:0, isMeta:true,
     aliases:["meta","facebook ads","meta ads management","meta advertising"],
     tagline:"We build and run the entire engine — funnel, landing pages, CRM and automation in GoHighLevel, and the Meta Ads that feed it. Not just campaigns like your last provider.",
-    bullets:["Full campaign, ad set & ad setup","Funnel & high-converting landing pages built for you","GoHighLevel CRM, pipelines & automations","Audience research & creative direction","Daily optimisation & structured A/B testing","Pixel + Conversions API tracking","Weekly performance report","Standing weekly strategy call"]
+    bullets:["Full campaign, ad set & ad setup","Funnel & high-converting landing pages built for you","Audience research & creative direction","Daily optimisation & structured A/B testing","Pixel + Conversions API tracking","Weekly performance report","Standing weekly strategy call","Ad copy & creative direction"]
   },
   "ghl support": {
     key:"ghl support", name:"GoHighLevel Support",
@@ -381,6 +381,16 @@ function findTemplate(label){
 function parseServices(str){
   if(!str) return [];
   return str.split(",").map(s=>s.trim()).filter(Boolean).map(findTemplate).filter(Boolean);
+}
+
+// Adjusts iMessage Line price and name for number of lines (column Y: iMessage Lines)
+function adjustForLines(picked){
+  const lines = Math.max(1, parseInt(field(state.row,"iMessage Lines"))||1);
+  if(lines <= 1) return picked;
+  return picked.map(t => {
+    if(t.key !== "imessage line") return t;
+    return {...t, price: t.price * lines, name: `iMessage Line (${lines} lines)`};
+  });
 }
 
 function pkgMonthly(services, specialMeta){
@@ -478,7 +488,7 @@ function render(row){
    FIXED MODE
    ====================================================== */
 function renderFixed(row){
-  const picked = parseServices(field(row,"Services"));
+  const picked = adjustForLines(parseServices(field(row,"Services")));
   const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
   const show10 = truthy(field(row,"10% Clause"));
   const showB = truthy(field(row,"Measuring Banner"));
@@ -501,7 +511,7 @@ function renderPickOne(row){
     const n = field(row,`Package ${i} Name`);
     const s = field(row,`Package ${i} Services`);
     const d = field(row,`Package ${i} Discount`);
-    if(n&&s) state.packages.push({name:n, services:parseServices(s), discount:d});
+    if(n&&s) state.packages.push({name:n, services:adjustForLines(parseServices(s)), discount:d});
   }
   if(!state.packages.length){ renderFixed(row); return; }
 
@@ -553,8 +563,8 @@ window.selectPackage = function(idx){
    ====================================================== */
 function renderPickAddons(row){
   const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
-  state.coreServices = parseServices(field(row,"Services"));
-  state.optionalServices = parseServices(field(row,"Optional Services"));
+  state.coreServices = adjustForLines(parseServices(field(row,"Services")));
+  state.optionalServices = adjustForLines(parseServices(field(row,"Optional Services")));
   state.addedAddons = new Set();
 
   updateMetaNotice(state.coreServices);
