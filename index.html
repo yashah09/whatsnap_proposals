@@ -402,10 +402,15 @@ function applyOverrides(picked){
     "ghl support":   parseFloat(field(row,"GHL Price Override"))||0,
     "imessage line": parseFloat(field(row,"iMessage Price Override"))||0,
   };
+  const iMsgSetup = field(row,"iMessage Setup Fee"); // blank = default $700, "0" = hide, any number = custom
   return picked.map(t => {
+    const effectiveSetupFee = (t.key === "imessage line" && iMsgSetup !== "")
+      ? (parseFloat(iMsgSetup)||0)
+      : t.setupFee;
+    const base = {...t, setupFee: effectiveSetupFee};
     const ovPrice = ov[t.key];
-    if(!ovPrice) return {...t, effectivePrice: t.price};
-    return {...t, effectivePrice: ovPrice, originalPrice: t.price, crossOff: ovPrice < t.price};
+    if(!ovPrice) return {...base, effectivePrice: t.price};
+    return {...base, effectivePrice: ovPrice, originalPrice: t.price, crossOff: ovPrice < t.price};
   });
 }
 
