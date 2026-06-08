@@ -319,7 +319,7 @@ const TEMPLATES = {
     price:1500, unit:"month", setupFee:0, isMeta:true,
     aliases:["meta","facebook ads","meta ads management","meta advertising"],
     tagline:"We build and run the entire engine — funnel, landing pages, CRM and automation in GoHighLevel, and the Meta Ads that feed it. Not just campaigns like your last provider.",
-    bullets:["Full campaign, ad set & ad setup","Funnel & high-converting landing pages built for you","Audience research & creative direction","Optimisation & structured A/B testing","Pixel + Conversions API tracking","Weekly performance report","Ad copy & creative direction"]
+    bullets:["Full campaign, ad set & ad setup","Funnel & high-converting landing pages built for you","Audience research & creative direction","Daily optimisation & structured A/B testing","Pixel + Conversions API tracking","Weekly performance report","Standing weekly strategy call","Ad copy & creative direction"]
   },
   "ghl support": {
     key:"ghl support", name:"GoHighLevel Support",
@@ -393,11 +393,24 @@ function adjustForLines(picked){
   });
 }
 
-function pkgMonthly(services, specialMeta){
-  return services.reduce((t, s) => {
-    if(s.unit !== "month") return t;
-    return t + (s.isMeta && specialMeta > 0 ? specialMeta : s.price);
-  }, 0);
+// Applies per-client price overrides — Meta Ads Special Price (col V), GHL Price Override (col Z), iMessage Price Override (col AA)
+// If override < template price → shows cross-off (discount). If override > → plain new price (more scope).
+function applyOverrides(picked){
+  const row = state.row;
+  const ov = {
+    "meta ads":      parseFloat(field(row,"Meta Ads Special Price"))||0,
+    "ghl support":   parseFloat(field(row,"GHL Price Override"))||0,
+    "imessage line": parseFloat(field(row,"iMessage Price Override"))||0,
+  };
+  return picked.map(t => {
+    const ovPrice = ov[t.key];
+    if(!ovPrice) return {...t, effectivePrice: t.price};
+    return {...t, effectivePrice: ovPrice, originalPrice: t.price, crossOff: ovPrice < t.price};
+  });
+}
+
+function pkgMonthly(services){
+  return services.reduce((t, s) => s.unit==="month" ? t + s.effectivePrice : t, 0);
 }
 
 function pkgSetup(services){
@@ -488,37 +501,34 @@ function render(row){
    FIXED MODE
    ====================================================== */
 function renderFixed(row){
-  const picked = adjustForLines(parseServices(field(row,"Services")));
-  const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
+  const picked = applyOverrides(adjustForLines(parseServices(field(row,"Services"))));
   const show10 = truthy(field(row,"10% Clause"));
   const showB = truthy(field(row,"Measuring Banner"));
-
   updateMetaNotice(picked);
   $("#svcHead").style.display = "block";
   $("#svcH").textContent = "Your scope of work.";
   $("#svcSub").textContent = "Each service below is delivered end to end by WhatSnap — built, managed, and reported on.";
-  $("#svcList").innerHTML = buildSvcCards(picked, sp);
-  updateSummary(picked, field(row,"Discount"), sp, show10, showB);
+  $("#svcList").innerHTML = buildSvcCards(picked);
+  updateSummary(picked, field(row,"Discount"), show10, showB);
 }
 
 /* ======================================================
    PICK-ONE MODE
    ====================================================== */
 function renderPickOne(row){
-  const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
   state.packages = [];
   for(let i=1;i<=3;i++){
     const n = field(row,`Package ${i} Name`);
     const s = field(row,`Package ${i} Services`);
     const d = field(row,`Package ${i} Discount`);
-    if(n&&s) state.packages.push({name:n, services:adjustForLines(parseServices(s)), discount:d});
+    if(n&&s) state.packages.push({name:n, services:applyOverrides(adjustForLines(parseServices(s))), discount:d});
   }
   if(!state.packages.length){ renderFixed(row); return; }
 
   $("#pkgSel").style.display = "block";
   const total = state.packages.length;
   $("#pkgGrid").innerHTML = state.packages.map((pkg,idx) => {
-    const monthly = pkgMonthly(pkg.services, sp);
+    const monthly = pkgMonthly(pkg.services);
     const setup = pkgSetup(pkg.services);
     const isPopular = total === 3 && idx === 1;
     return `<div class="pkg-card" data-idx="${idx}" onclick="selectPackage(${idx})">
@@ -538,7 +548,6 @@ function renderPickOne(row){
 window.selectPackage = function(idx){
   state.selectedPkgIdx = idx;
   const row = state.row;
-  const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
   const show10 = truthy(field(row,"10% Clause"));
   const showB = truthy(field(row,"Measuring Banner"));
   const pkg = state.packages[idx];
@@ -554,17 +563,16 @@ window.selectPackage = function(idx){
   $("#svcEyebrow").textContent = "What's included";
   $("#svcH").textContent = `What's included in ${pkg.name}.`;
   $("#svcSub").textContent = "";
-  $("#svcList").innerHTML = buildSvcCards(pkg.services, sp);
-  updateSummary(pkg.services, pkg.discount, sp, show10 && hasMeta, showB && hasMeta);
+  $("#svcList").innerHTML = buildSvcCards(pkg.services);
+  updateSummary(pkg.services, pkg.discount, show10 && hasMeta, showB && hasMeta);
 };
 
 /* ======================================================
    PICK-ADDONS MODE
    ====================================================== */
 function renderPickAddons(row){
-  const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
-  state.coreServices = adjustForLines(parseServices(field(row,"Services")));
-  state.optionalServices = adjustForLines(parseServices(field(row,"Optional Services")));
+  state.coreServices = applyOverrides(adjustForLines(parseServices(field(row,"Services"))));
+  state.optionalServices = applyOverrides(adjustForLines(parseServices(field(row,"Optional Services"))));
   state.addedAddons = new Set();
 
   updateMetaNotice(state.coreServices);
@@ -574,15 +582,16 @@ function renderPickAddons(row){
     : "Your core package";
   $("#coreH").textContent = `${coreH}.`;
   $("#coreSub").textContent = "These services are locked in as part of your proposal.";
-  $("#coreList").innerHTML = buildSvcCards(state.coreServices, sp, true);
+  $("#coreList").innerHTML = buildSvcCards(state.coreServices, false, true);
 
   $("#addonList").innerHTML = state.optionalServices.map(t => {
-    const price = t.isMeta && sp > 0 ? sp : t.price;
+    const price = t.effectivePrice;
     const unitLabel = t.unit === "month" ? "/mo" : " one-time";
     const setupNote = t.setupFee > 0 ? ` + ${money(t.setupFee)} setup` : "";
+    const crossHtml = t.crossOff ? `<span style="display:block;font-size:13px;color:var(--muted-2);text-decoration:line-through">${money(t.originalPrice)}/mo</span>` : "";
     return `<div class="addon-card" data-key="${t.key}">
       <div><div class="addon-name">${t.name}</div><div class="addon-desc">${t.tagline}</div></div>
-      <div class="addon-price">${money(price)}<small>${unitLabel}${setupNote}</small></div>
+      <div class="addon-price">${crossHtml}${money(price)}<small>${unitLabel}${setupNote}</small></div>
       <button class="addon-btn" onclick="toggleAddon('${t.key}')">+ Add to plan</button>
     </div>`;
   }).join("");
@@ -607,26 +616,24 @@ window.toggleAddon = function(key){
 
 function doAddonSummary(){
   const row = state.row;
-  const sp = parseFloat(field(row,"Meta Ads Special Price"))||0;
   const show10 = truthy(field(row,"10% Clause"));
   const showB = truthy(field(row,"Measuring Banner"));
   const allPicked = [...state.coreServices, ...state.optionalServices.filter(t=>state.addedAddons.has(t.key))];
   const hasMeta = allPicked.some(t=>t.isMeta);
-  updateSummary(allPicked, field(row,"Discount"), sp, show10 && hasMeta, showB && hasMeta);
+  updateSummary(allPicked, field(row,"Discount"), show10 && hasMeta, showB && hasMeta);
 }
 
 /* ======================================================
    BUILDERS
    ====================================================== */
-function buildSvcCards(picked, specialMeta, locked){
+function buildSvcCards(picked, _unused, locked){
   return picked.map(t => {
-    const useSp = t.isMeta && specialMeta > 0;
-    const price = useSp ? specialMeta : t.price;
+    const price = t.effectivePrice;
     const unitLabel = t.unit === "month" ? "/mo" : " one-time";
     let priceHtml;
-    if(useSp){
+    if(t.crossOff){
       priceHtml = `<div class="svc-price-crossoff">
-        <span class="orig">${money(t.price)}/mo</span>
+        <span class="orig">${money(t.originalPrice)}/mo</span>
         <span class="special grad-text">${money(price)}<small>${unitLabel}</small></span>
         <span class="special-badge">Special rate</span>
       </div>`;
@@ -642,12 +649,11 @@ function buildSvcCards(picked, specialMeta, locked){
   }).join("");
 }
 
-function updateSummary(picked, discount, specialMeta, show10, showBanner){
+function updateSummary(picked, discount, show10, showBanner){
   let monthly = 0, oneTime = 0;
   picked.forEach(t => {
-    const p = (t.isMeta && specialMeta > 0) ? specialMeta : t.price;
-    if(t.unit === "month") monthly += p;
-    else oneTime += p;
+    if(t.unit === "month") monthly += t.effectivePrice;
+    else oneTime += t.effectivePrice;
     oneTime += (t.setupFee||0);
   });
 
@@ -660,10 +666,9 @@ function updateSummary(picked, discount, specialMeta, show10, showBanner){
   const monthlyTotal = Math.max(0, monthly - discAmt);
   const hasMeta = picked.some(t=>t.isMeta);
 
-  let html = picked.filter(t=>t.unit==="month").map(t => {
-    const p = (t.isMeta && specialMeta > 0) ? specialMeta : t.price;
-    return `<div class="sum-row"><span class="nm">${t.name}</span><span class="vl">${money(p)}/mo</span></div>`;
-  }).join("");
+  let html = picked.filter(t=>t.unit==="month").map(t =>
+    `<div class="sum-row"><span class="nm">${t.name}</span><span class="vl">${money(t.effectivePrice)}/mo</span></div>`
+  ).join("");
 
   if(discAmt>0){
     html += `<div class="sum-row"><span class="nm">Subtotal</span><span class="vl">${money(monthly)}/mo</span></div>`;
@@ -677,10 +682,11 @@ function updateSummary(picked, discount, specialMeta, show10, showBanner){
   html += `<div class="sum-note">${notes.join(" · ")}</div>`;
   $("#summary").innerHTML = html;
 
-  // Clause
+  // Clause — threshold derived from Meta Ads effective price
   let cw = "";
   if(show10){
-    const metaFlat = (specialMeta > 0) ? specialMeta : 1500;
+    const metaT = picked.find(t=>t.isMeta);
+    const metaFlat = metaT ? metaT.effectivePrice : 1500;
     const threshold = metaFlat * 10;
     const thresholdTick = `$${threshold/1000}k`;
     cw += `<div class="clause"><span class="eq">↗</span><span>Once monthly ad spend exceeds <b>${money(threshold)}</b>, Meta Ads management moves to <b>10% of ad spend</b> — so our fee scales only as your results do.</span></div>`;
