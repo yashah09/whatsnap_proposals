@@ -99,6 +99,12 @@ h2{font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:
 .svc-card .svc-tag{color:var(--muted);font-size:15px;margin-top:6px;max-width:54ch}
 .svc-price-normal{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.02em;white-space:nowrap;text-align:right}
 .svc-price-normal small{font-family:var(--body);font-weight:500;font-size:14px;color:var(--muted);letter-spacing:0}
+/* Split price — build-out + monthly shown separately */
+.svc-price-split{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.svc-price-split-row{display:flex;flex-direction:column;align-items:flex-end}
+.svc-price-split-label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);margin-bottom:1px}
+.svc-price-split-value{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.02em;white-space:nowrap;text-align:right}
+.svc-price-split-value small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:0}
 .svc-price-crossoff{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .svc-price-crossoff .orig{font-family:var(--display);font-weight:700;font-size:19px;color:var(--muted-2);text-decoration:line-through;white-space:nowrap}
 .svc-price-crossoff .special{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.02em;white-space:nowrap}
@@ -597,6 +603,9 @@ function render(row){
   $("#coreSec").style.display = "none";
   $("#svcHead").style.display = "none";
   $("#svcList").innerHTML = "";
+  // Always show pricing section first; pick-one will hide it after
+  const pricingSecDisp = document.getElementById("pricing");
+  if(pricingSecDisp) pricingSecDisp.style.display = "";
   if(mode === "pick-one") renderPickOne(row);
   else if(mode === "pick-addons") renderPickAddons(row);
   else renderFixed(row);
@@ -631,10 +640,12 @@ function renderPickOne(row){
   if(!state.packages.length){ renderFixed(row); return; }
 
   $("#pkgSel").style.display = "block";
-  // Hide main svcHead — pick-one uses the detail panel instead
+  // Hide main svcHead and pricing section — pick-one uses the detail panel instead
   $("#svcHead").style.display = "none";
   $("#svcList").innerHTML = "";
   $("#summary").innerHTML = "";
+  const pricingSec = document.getElementById("pricing");
+  if(pricingSec) pricingSec.style.display = "none";
   const total = state.packages.length;
 
   // Build package cards
@@ -777,17 +788,37 @@ function doAddonSummary(){
 function buildSvcCards(picked, _unused, locked){
   return picked.map(t => {
     const price = t.effectivePrice;
-    const unitLabel = t.unit === "month" ? "/mo" : " one-time";
+    const setup = t.setupFee || 0;
     let priceHtml;
-    if(t.crossOff){
+
+    if(setup > 0){
+      // Service has a build-out fee — show both setup and monthly clearly
+      const setupCrossHtml = (t.setupCrossOff && t.setupOriginal)
+        ? `<span style="font-size:13px;color:var(--muted-2);text-decoration:line-through;display:block">${money(t.setupOriginal)} build-out</span>`
+        : "";
+      const monthlyCrossHtml = t.crossOff
+        ? `<span style="font-size:13px;color:var(--muted-2);text-decoration:line-through;display:block">${money(t.originalPrice)}/mo</span>`
+        : "";
+      priceHtml = `<div class="svc-price-split">
+        <div class="svc-price-split-row">
+          <span class="svc-price-split-label">Build-out</span>
+          <span class="svc-price-split-value">${setupCrossHtml}${money(setup)}<small> one-time</small></span>
+        </div>
+        <div class="svc-price-split-row">
+          <span class="svc-price-split-label">Monthly</span>
+          <span class="svc-price-split-value grad-text">${monthlyCrossHtml}${money(price)}<small>/mo</small></span>
+        </div>
+      </div>`;
+    } else if(t.crossOff){
       priceHtml = `<div class="svc-price-crossoff">
         <span class="orig">${money(t.originalPrice)}/mo</span>
-        <span class="special grad-text">${money(price)}<small>${unitLabel}</small></span>
+        <span class="special grad-text">${money(price)}<small>/mo</small></span>
         <span class="special-badge">Special rate</span>
       </div>`;
     } else {
-      priceHtml = `<div class="svc-price-normal">${money(price)}<small>${unitLabel}</small></div>`;
+      priceHtml = `<div class="svc-price-normal">${money(price)}<small>/mo</small></div>`;
     }
+
     const lockHtml = locked ? `<span class="lock-badge">✓ Always included</span>` : "";
     return `<div class="svc-card">
       <div><h3>${t.name} ${lockHtml}</h3><div class="svc-tag">${t.tagline}</div></div>
