@@ -321,7 +321,8 @@ const CONFIG = {
 const TEMPLATES = {
   "meta ads": {
     key:"meta ads", name:"Meta Ads Management",
-    price:1500, unit:"month", setupFee:0, isMeta:true,
+    price:1500, unit:"month", setupFee:1500, isMeta:true,
+    setupLabel:"Campaign & Funnel Build",
     aliases:["meta","facebook ads","meta ads management","meta advertising"],
     tagline:"We build and run the entire engine — funnel, landing pages, CRM and automation in GoHighLevel, and the Meta Ads that feed it. Not just campaigns like your last provider.",
     bullets:["Full campaign, ad set & ad setup","Funnel & high-converting landing pages built for you","Audience research & creative direction","Daily optimisation & structured A/B testing","Pixel + Conversions API tracking","Weekly performance report","Standing weekly strategy call","Ad copy & creative direction"]
@@ -329,16 +330,34 @@ const TEMPLATES = {
   "ghl support": {
     key:"ghl support", name:"GoHighLevel Support",
     price:300, unit:"month", setupFee:0,
+    setupLabel:"",
     aliases:["ghl","gohighlevel","go high level","crm support","ghl management"],
     tagline:"Your GHL account actively managed — 3–4 new builds every month and someone who actually knows the platform in your corner.",
     bullets:["3–4 new workflow or automation builds per month","Ongoing support across all existing GHL workflows","Monthly 30-min strategy & review call","Pipeline and stage management","Dashboard and reporting setup","Notification and alert configuration","Proactive optimisation suggestions","Same-week turnaround on all requests"]
   },
   "imessage line": {
     key:"imessage line", name:"iMessage Line",
+    price:275, unit:"month", setupFee:500,
+    setupLabel:"iMessage Setup",
+    aliases:["imessage","sms line","i message line","imessage no ai","imessage line no ai"],
+    tagline:"Your own iMessage line — set up, connected to your CRM, and ready to handle leads from day one.",
+    bullets:["Your own local iMessage number — no per-message fees","Automatic SMS fallback when they don't have iMessage","New leads contacted in seconds, not hours","Automated follow-up sequences until leads respond","Automated reminders that cut no-shows in half","Cold leads re-engaged on autopilot","Full CRM integration — every conversation logged","Same-week setup and go-live"]
+  },
+  "imessage line + ai": {
+    key:"imessage line + ai", name:"iMessage Line + AI Agent",
     price:275, unit:"month", setupFee:700,
-    aliases:["imessage","sms line","imessage ads","i message line"],
-    tagline:"Your own AI-powered iMessage line — set up, connected to your CRM, and running leads on autopilot from day one.",
-    bullets:["Your own local iMessage number — no per-message fees","Automatic SMS fallback when they don't have iMessage","New leads contacted in seconds, not hours","Pre-trained AI setter that qualifies and books — 24/7","Automated follow-up until leads are ready to buy","Automated reminders that cut no-shows in half","Cold leads re-engaged on autopilot","Full CRM integration — every conversation logged"]
+    setupLabel:"iMessage + AI Agent Build",
+    aliases:["imessage ai","imessage + ai","imessage line ai","imessage with ai","i message + ai"],
+    tagline:"Your own iMessage line with a custom-trained AI setter built on top — qualifying leads, booking appointments, and following up 24/7 without you lifting a finger.",
+    bullets:["Your own local iMessage number — no per-message fees","Automatic SMS fallback when they don't have iMessage","Custom AI setter trained on your offer and objections","New leads contacted and qualified in seconds — 24/7","Automated follow-up until leads are ready to buy","Appointment booking handled entirely by the AI","Automated reminders that cut no-shows in half","Full CRM integration — every conversation logged"]
+  },
+  "imessage line + premium ai": {
+    key:"imessage line + premium ai", name:"iMessage Line + Premium AI Agent",
+    price:275, unit:"month", setupFee:1500,
+    setupLabel:"iMessage + Premium AI Agent Build",
+    aliases:["imessage premium","imessage premium ai","imessage + premium ai","imessage line premium ai","imessage with premium ai"],
+    tagline:"Our most advanced iMessage setup — a fully custom AI agent with deep training, multi-stage conversation flows, and objection handling engineered for your business.",
+    bullets:["Your own local iMessage number — no per-message fees","Automatic SMS fallback when they don't have iMessage","Fully custom AI agent — deep-trained on your offer, scripts & objections","Multi-stage conversation flows (qualify → nurture → book)","Handles objections, re-engages cold leads, follows up indefinitely","Appointment booking handled entirely by the AI — 24/7","Automated reminders that cut no-shows in half","Full CRM integration — every conversation logged"]
   }
 };
 
@@ -347,9 +366,12 @@ const TEMPLATES = {
    Add these exact rows to your sheet to test all modes
    ====================================================== */
 const DEMO_ROWS = [
-  {"First Name":"Zach","Last Name":"Dover","Company Name":"Cash Offer BlackFinn","Email":"zach@blackfinnrei.com","Password":"blackfinn","Proposal Mode":"fixed","Services":"Meta Ads, GHL Support","Discount":"10%","10% Clause":"TRUE","Measuring Banner":"TRUE","Meta Ads Special Price":"1200","Custom Note":"Here's the full growth engine we'll build and run for Cash Offer BlackFinn — Meta Ads plus the GoHighLevel CRM and automations behind them."},
-  {"First Name":"Stuart","Last Name":"Schwartz","Company Name":"Platinum Energy Group","Email":"stuart@1energygroup.com","Password":"energy123","Proposal Mode":"pick-one","Package 1 Name":"Starter","Package 1 Services":"Meta Ads","Package 2 Name":"Growth","Package 2 Services":"Meta Ads, GHL Support","Package 3 Name":"Full Stack","Package 3 Services":"Meta Ads, GHL Support, iMessage Line","10% Clause":"TRUE","Measuring Banner":"TRUE","Custom Note":""},
-  {"First Name":"Brian","Last Name":"Veal","Company Name":"HURT911","Email":"brianvealdc@icloud.com","Password":"hurt911","Proposal Mode":"pick-addons","Services":"Meta Ads","Optional Services":"GHL Support, iMessage Line","10% Clause":"TRUE","Measuring Banner":"FALSE","Meta Ads Setup Fee":"1500","GHL Setup Fee":"1219","iMessage Setup Fee":"700","Custom Note":"We've put together a core Meta Ads package for HURT911, with the option to add GoHighLevel support and an iMessage line as you scale."}
+  // FIXED MODE — Blackfinn (Meta + GHL, discounted Meta)
+  {"First Name":"Zach","Last Name":"Dover","Company Name":"Cash Offer BlackFinn","Email":"zach@blackfinnrei.com","Password":"blackfinn","Proposal Mode":"fixed","Services":"Meta Ads, GHL Support","Discount":"10%","10% Clause":"TRUE","Measuring Banner":"TRUE","Meta Ads Special Price":"1200","Custom Note":"Here's the full growth engine we'll build and run for Cash Offer BlackFinn."},
+  // PICK-ONE MODE — 3 packages inc. all iMessage variants
+  {"First Name":"Stuart","Last Name":"Schwartz","Company Name":"Platinum Energy Group","Email":"stuart@1energygroup.com","Password":"energy123","Proposal Mode":"pick-one","Package 1 Name":"Ads Only","Package 1 Services":"Meta Ads, GHL Support","Package 2 Name":"Growth","Package 2 Services":"Meta Ads, GHL Support, iMessage Line + AI","Package 3 Name":"Full Stack","Package 3 Services":"Meta Ads, GHL Support, iMessage Line + Premium AI","10% Clause":"TRUE","Measuring Banner":"TRUE","Custom Note":""},
+  // PICK-ADDONS MODE — core Meta + optional add-ons
+  {"First Name":"Brian","Last Name":"Veal","Company Name":"HURT911","Email":"brianvealdc@icloud.com","Password":"hurt911","Proposal Mode":"pick-addons","Services":"Meta Ads","Optional Services":"GHL Support, iMessage Line + AI","10% Clause":"TRUE","Measuring Banner":"FALSE","Custom Note":"We've put together a core Meta Ads package for HURT911, with optional add-ons as you scale."}
 ];
 
 /* ======================================================
@@ -388,18 +410,21 @@ function parseServices(str){
   return str.split(",").map(s=>s.trim()).filter(Boolean).map(findTemplate).filter(Boolean);
 }
 
-// Adjusts iMessage Line price and name for number of lines (column Y: iMessage Lines)
+// Adjusts iMessage price and name for number of lines (sheet col: iMessage Lines)
+// Applies to all 3 iMessage variants
+const IMESSAGE_KEYS = ["imessage line","imessage line + ai","imessage line + premium ai"];
 function adjustForLines(picked){
   const lines = Math.max(1, parseInt(field(state.row,"iMessage Lines"))||1);
   if(lines <= 1) return picked;
   return picked.map(t => {
-    if(t.key !== "imessage line") return t;
+    if(!IMESSAGE_KEYS.includes(t.key)) return t;
     return {
       ...t,
       price: t.price * lines,
-      effectivePrice: t.effectivePrice * lines,
+      effectivePrice: (t.effectivePrice||t.price) * lines,
       originalPrice: t.originalPrice ? t.originalPrice * lines : undefined,
-      name: `iMessage Line (${lines} lines)`
+      setupFee: (t.setupFee||0) * lines,
+      name: `${t.name} (${lines} lines)`
     };
   });
 }
@@ -408,21 +433,37 @@ function adjustForLines(picked){
 // If override < template price → shows cross-off (discount). If override > → plain new price (more scope).
 function applyOverrides(picked){
   const row = state.row;
-  const ov = {
-    "meta ads":      parseFloat(field(row,"Meta Ads Special Price"))||0,
-    "ghl support":   parseFloat(field(row,"GHL Price Override"))||0,
-    "imessage line": parseFloat(field(row,"iMessage Price Override"))||0,
+
+  // Monthly price overrides (iMessage override applies to all 3 iMessage variants)
+  const monthlyOv = {
+    "meta ads":                   parseFloat(field(row,"Meta Ads Special Price"))||0,
+    "ghl support":                parseFloat(field(row,"GHL Price Override"))||0,
+    "imessage line":              parseFloat(field(row,"iMessage Price Override"))||0,
+    "imessage line + ai":         parseFloat(field(row,"iMessage Price Override"))||0,
+    "imessage line + premium ai": parseFloat(field(row,"iMessage Price Override"))||0,
   };
-  const iMsgSetup   = field(row,"iMessage Setup Fee");   // blank = default $700, "0" = hide, any number = custom
-  const metaSetup   = field(row,"Meta Ads Setup Fee");   // blank = default $0, "0" = hide, any number = custom
-  const ghlSetup    = field(row,"GHL Setup Fee");        // blank = default $0, "0" = hide, any number = custom
+
+  // Setup fee overrides — blank = use template default, "0" = waive, any number = custom
+  const metaSetup  = field(row,"Meta Ads Setup Fee");
+  const ghlSetup   = field(row,"GHL Setup Fee");
+  const iMsgSetup  = field(row,"iMessage Setup Fee");
+
   return picked.map(t => {
+    // Resolve setup fee
     let effectiveSetupFee = t.setupFee;
-    if(t.key === "imessage line" && iMsgSetup !== "") effectiveSetupFee = parseFloat(iMsgSetup)||0;
-    if(t.key === "meta ads"      && metaSetup  !== "") effectiveSetupFee = parseFloat(metaSetup)||0;
-    if(t.key === "ghl support"   && ghlSetup   !== "") effectiveSetupFee = parseFloat(ghlSetup)||0;
-    const base = {...t, setupFee: effectiveSetupFee};
-    const ovPrice = ov[t.key];
+    if(t.key === "meta ads"    && metaSetup !== "") effectiveSetupFee = parseFloat(metaSetup)||0;
+    if(t.key === "ghl support" && ghlSetup  !== "") effectiveSetupFee = parseFloat(ghlSetup)||0;
+    if(["imessage line","imessage line + ai","imessage line + premium ai"].includes(t.key) && iMsgSetup !== "")
+      effectiveSetupFee = parseFloat(iMsgSetup)||0;
+
+    // Cross-off for setup fee: if override is lower than template default
+    const setupCrossOff = effectiveSetupFee > 0 && t.setupFee > 0 && effectiveSetupFee < t.setupFee;
+    const setupOriginal = setupCrossOff ? t.setupFee : null;
+
+    const base = {...t, setupFee: effectiveSetupFee, setupCrossOff, setupOriginal};
+
+    // Resolve monthly price override
+    const ovPrice = monthlyOv[t.key];
     if(!ovPrice) return {...base, effectivePrice: t.price};
     return {...base, effectivePrice: ovPrice, originalPrice: t.price, crossOff: ovPrice < t.price};
   });
@@ -686,21 +727,34 @@ function updateSummary(picked, discount, show10, showBanner){
 
   let html = "";
 
-  // ── ONE-TIME SETUP BLOCK (shown first, prominent) ──
+  // ── ONE-TIME / KICKOFF BLOCK ──
   const setupItems = [];
   picked.forEach(t => {
-    const fee = t.setupFee||0;
-    const onetimeSvc = t.unit !== "month" ? t.effectivePrice : 0;
-    if(fee > 0) setupItems.push({ name: t.name + " — Setup", amount: fee });
-    if(onetimeSvc > 0) setupItems.push({ name: t.name, amount: onetimeSvc });
+    // Setup fee line (with cross-off support)
+    if((t.setupFee||0) > 0 || (t.setupOriginal||0) > 0){
+      const label = t.setupLabel || (t.name + " — Setup");
+      if(t.setupCrossOff && t.setupOriginal){
+        setupItems.push({ label, amount: t.setupFee, origAmount: t.setupOriginal });
+      } else {
+        setupItems.push({ label, amount: t.setupFee||0, origAmount: null });
+      }
+    }
   });
 
   if(oneTime > 0){
+    const rows = setupItems.map(item => {
+      const crossHtml = item.origAmount
+        ? `<span style="font-size:12px;color:var(--muted-2);text-decoration:line-through;margin-right:6px">${money(item.origAmount)}</span>`
+        : "";
+      return `<div class="sum-onetime-row">
+        <span class="nm">${item.label}</span>
+        <span class="vl">${crossHtml}${money(item.amount)}</span>
+      </div>`;
+    }).join("");
+
     html += `<div class="sum-onetime-block">
       <div class="sum-onetime-label">One-time to get started</div>
-      ${setupItems.map(item =>
-        `<div class="sum-onetime-row"><span class="nm">${item.name}</span><span class="vl">${money(item.amount)}</span></div>`
-      ).join("")}
+      ${rows}
       <div class="sum-onetime-total-row">
         <span class="nm">Due at kickoff</span>
         <span class="vl">${money(oneTime)}</span>
@@ -726,25 +780,6 @@ function updateSummary(picked, discount, show10, showBanner){
   html += `<div class="sum-note">${notes.join(" · ")}</div>`;
   $("#summary").innerHTML = html;
 
-  // Clause — threshold derived from Meta Ads effective price
-  let cw = "";
-  if(show10){
-    const metaT = picked.find(t=>t.isMeta);
-    const metaFlat = metaT ? metaT.effectivePrice : 1500;
-    const threshold = metaFlat * 10;
-    const thresholdTick = `$${threshold/1000}k`;
-    cw += `<div class="clause"><span class="eq">↗</span><span>Once monthly ad spend exceeds <b>${money(threshold)}</b>, Meta Ads management moves to <b>10% of ad spend</b> — so our fee scales only as your results do.</span></div>`;
-    if(showBanner){
-      cw += `<div class="calc"><div class="calc-grid">
-        <div><div class="label">Monthly ad spend</div><div class="spendval" id="spendVal">${money(threshold)}</div>
-          <input type="range" id="slider" min="1000" max="50000" step="500" value="${threshold}" data-flat="${metaFlat}"/>
-          <div class="ticks"><span>$1k</span><span>${thresholdTick}</span><span>$30k</span><span>$50k</span></div></div>
-        <div class="calc-out"><div class="ol">Meta Ads management fee</div>
-          <div class="fee grad-text" id="feeVal">${money(metaFlat)}<small>/mo</small></div></div>
-      </div></div>`;
-    }
-  }
-  $("#clauseWrap").innerHTML = cw;
   initCalc();
 }
 
