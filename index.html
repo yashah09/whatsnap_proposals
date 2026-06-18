@@ -589,7 +589,8 @@ function setupCommon(row){
    RENDER DISPATCHER
    ====================================================== */
 function render(row){
-  const mode = (field(row,"Proposal Mode")||"fixed").toLowerCase().trim();
+  // Normalize mode: lowercase, trim, replace spaces with hyphens so "Pick One" = "pick-one"
+  const mode = (field(row,"Proposal Mode")||"fixed").toLowerCase().trim().replace(/\s+/g,"-");
   state.mode = mode;
   // hide all dynamic sections first
   $("#pkgSel").style.display = "none";
@@ -622,10 +623,10 @@ function renderFixed(row){
 function renderPickOne(row){
   state.packages = [];
   for(let i=1;i<=3;i++){
-    const n = field(row,`Package ${i} Name`);
+    const n = field(row,`Package ${i} Name`) || `Option ${i}`;
     const s = field(row,`Package ${i} Services`);
     const d = field(row,`Package ${i} Discount`);
-    if(n&&s) state.packages.push({name:n, services:adjustForLines(applyOverrides(parseServices(s))), discount:d});
+    if(s) state.packages.push({name:n, services:adjustForLines(applyOverrides(parseServices(s))), discount:d});
   }
   if(!state.packages.length){ renderFixed(row); return; }
 
