@@ -407,7 +407,30 @@ function findTemplate(label){
 
 function parseServices(str){
   if(!str) return [];
-  return str.split(",").map(s=>s.trim()).filter(Boolean).map(findTemplate).filter(Boolean);
+  // Google Sheets multi-select can store values separated by commas with or without spaces.
+  // We split on comma, then also try matching multi-word tokens in case sheet uses space-only separation.
+  // Each token is trimmed and matched against TEMPLATES + aliases.
+  const byComma = str.split(",").map(s=>s.trim()).filter(Boolean);
+  // If comma-split gives us valid templates, use that
+  const commaResult = byComma.map(findTemplate).filter(Boolean);
+  if(commaResult.length > 0) return commaResult;
+  // Fallback: try matching greedily against known template names/aliases (longest match first)
+  // This handles Google Sheets storing multi-select with spaces as separator
+  const allKeys = Object.values(TEMPLATES).flatMap(t => [t.key, ...(t.aliases||[])]).sort((a,b) => b.length - a.length);
+  const lower = str.toLowerCase();
+  const found = [];
+  const used = new Set();
+  for(const key of allKeys){
+    const idx = lower.indexOf(key);
+    if(idx !== -1 && !used.has(TEMPLATES[key] ? key : null)){
+      const t = findTemplate(key);
+      if(t && !found.some(f => f.key === t.key)){
+        found.push(t);
+        used.add(t.key);
+      }
+    }
+  }
+  return found;
 }
 
 // Adjusts iMessage price and name for number of lines (sheet col: iMessage Lines)
