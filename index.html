@@ -173,6 +173,14 @@ h2{font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:
 .summary{max-width:540px;margin:40px auto 0;background:linear-gradient(180deg,rgba(168,150,228,.09),var(--card));
   border:1px solid var(--accent-line);border-radius:24px;padding:32px;
   box-shadow:0 0 0 1px var(--accent-line),0 28px 65px rgba(168,150,228,.12)}
+.sum-onetime-block{background:var(--bg-3);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:24px}
+.sum-onetime-label{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.sum-onetime-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:14px;border-bottom:1px solid var(--line-2)}
+.sum-onetime-row .nm{color:var(--muted)}.sum-onetime-row .vl{font-family:var(--mono);color:var(--muted)}
+.sum-onetime-total-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:12px;margin-top:8px}
+.sum-onetime-total-row .nm{font-family:var(--display);font-weight:700;font-size:17px;color:var(--ink)}
+.sum-onetime-total-row .vl{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ink)}
+.sum-section-label{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .sum-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;
   font-size:15.5px;border-bottom:1px solid var(--line-2)}
 .sum-row .nm{color:var(--muted)}.sum-row .vl{font-family:var(--mono);color:var(--ink)}
@@ -180,8 +188,6 @@ h2{font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:
 .sum-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:16px;margin-top:4px}
 .sum-total .nm{font-family:var(--display);font-weight:700;font-size:20px}
 .sum-total .vl{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em}
-.sum-onetime{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:14px;color:var(--muted)}
-.sum-onetime .vl{font-family:var(--mono)}
 .sum-note{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--muted-2);text-align:center}
 
 /* CLAUSE + CALCULATOR */
@@ -343,7 +349,7 @@ const TEMPLATES = {
 const DEMO_ROWS = [
   {"First Name":"Zach","Last Name":"Dover","Company Name":"Cash Offer BlackFinn","Email":"zach@blackfinnrei.com","Password":"blackfinn","Proposal Mode":"fixed","Services":"Meta Ads, GHL Support","Discount":"10%","10% Clause":"TRUE","Measuring Banner":"TRUE","Meta Ads Special Price":"1200","Custom Note":"Here's the full growth engine we'll build and run for Cash Offer BlackFinn — Meta Ads plus the GoHighLevel CRM and automations behind them."},
   {"First Name":"Stuart","Last Name":"Schwartz","Company Name":"Platinum Energy Group","Email":"stuart@1energygroup.com","Password":"energy123","Proposal Mode":"pick-one","Package 1 Name":"Starter","Package 1 Services":"Meta Ads","Package 2 Name":"Growth","Package 2 Services":"Meta Ads, GHL Support","Package 3 Name":"Full Stack","Package 3 Services":"Meta Ads, GHL Support, iMessage Line","10% Clause":"TRUE","Measuring Banner":"TRUE","Custom Note":""},
-  {"First Name":"Brian","Last Name":"Veal","Company Name":"HURT911","Email":"brianvealdc@icloud.com","Password":"hurt911","Proposal Mode":"pick-addons","Services":"Meta Ads","Optional Services":"GHL Support, iMessage Line","10% Clause":"TRUE","Measuring Banner":"FALSE","Custom Note":"We've put together a core Meta Ads package for HURT911, with the option to add GoHighLevel support and an iMessage line as you scale."}
+  {"First Name":"Brian","Last Name":"Veal","Company Name":"HURT911","Email":"brianvealdc@icloud.com","Password":"hurt911","Proposal Mode":"pick-addons","Services":"Meta Ads","Optional Services":"GHL Support, iMessage Line","10% Clause":"TRUE","Measuring Banner":"FALSE","Meta Ads Setup Fee":"1500","GHL Setup Fee":"1219","iMessage Setup Fee":"700","Custom Note":"We've put together a core Meta Ads package for HURT911, with the option to add GoHighLevel support and an iMessage line as you scale."}
 ];
 
 /* ======================================================
@@ -407,11 +413,14 @@ function applyOverrides(picked){
     "ghl support":   parseFloat(field(row,"GHL Price Override"))||0,
     "imessage line": parseFloat(field(row,"iMessage Price Override"))||0,
   };
-  const iMsgSetup = field(row,"iMessage Setup Fee"); // blank = default $700, "0" = hide, any number = custom
+  const iMsgSetup   = field(row,"iMessage Setup Fee");   // blank = default $700, "0" = hide, any number = custom
+  const metaSetup   = field(row,"Meta Ads Setup Fee");   // blank = default $0, "0" = hide, any number = custom
+  const ghlSetup    = field(row,"GHL Setup Fee");        // blank = default $0, "0" = hide, any number = custom
   return picked.map(t => {
-    const effectiveSetupFee = (t.key === "imessage line" && iMsgSetup !== "")
-      ? (parseFloat(iMsgSetup)||0)
-      : t.setupFee;
+    let effectiveSetupFee = t.setupFee;
+    if(t.key === "imessage line" && iMsgSetup !== "") effectiveSetupFee = parseFloat(iMsgSetup)||0;
+    if(t.key === "meta ads"      && metaSetup  !== "") effectiveSetupFee = parseFloat(metaSetup)||0;
+    if(t.key === "ghl support"   && ghlSetup   !== "") effectiveSetupFee = parseFloat(ghlSetup)||0;
     const base = {...t, setupFee: effectiveSetupFee};
     const ovPrice = ov[t.key];
     if(!ovPrice) return {...base, effectivePrice: t.price};
@@ -675,7 +684,33 @@ function updateSummary(picked, discount, show10, showBanner){
   const monthlyTotal = Math.max(0, monthly - discAmt);
   const hasMeta = picked.some(t=>t.isMeta);
 
-  let html = picked.filter(t=>t.unit==="month").map(t =>
+  let html = "";
+
+  // ── ONE-TIME SETUP BLOCK (shown first, prominent) ──
+  const setupItems = [];
+  picked.forEach(t => {
+    const fee = t.setupFee||0;
+    const onetimeSvc = t.unit !== "month" ? t.effectivePrice : 0;
+    if(fee > 0) setupItems.push({ name: t.name + " — Setup", amount: fee });
+    if(onetimeSvc > 0) setupItems.push({ name: t.name, amount: onetimeSvc });
+  });
+
+  if(oneTime > 0){
+    html += `<div class="sum-onetime-block">
+      <div class="sum-onetime-label">One-time to get started</div>
+      ${setupItems.map(item =>
+        `<div class="sum-onetime-row"><span class="nm">${item.name}</span><span class="vl">${money(item.amount)}</span></div>`
+      ).join("")}
+      <div class="sum-onetime-total-row">
+        <span class="nm">Due at kickoff</span>
+        <span class="vl">${money(oneTime)}</span>
+      </div>
+    </div>`;
+  }
+
+  // ── MONTHLY SECTION ──
+  html += `<div class="sum-section-label">Then monthly</div>`;
+  html += picked.filter(t=>t.unit==="month").map(t =>
     `<div class="sum-row"><span class="nm">${t.name}</span><span class="vl">${money(t.effectivePrice)}/mo</span></div>`
   ).join("");
 
@@ -684,7 +719,7 @@ function updateSummary(picked, discount, show10, showBanner){
     html += `<div class="sum-row disc"><span class="nm">Discount (${discLabel})</span><span class="vl">−${money(discAmt)}/mo</span></div>`;
   }
   html += `<div class="sum-total"><span class="nm">Total</span><span class="vl grad-text">${money(monthlyTotal)}<span style="font-size:17px;color:var(--muted);-webkit-text-fill-color:var(--muted)">/mo</span></span></div>`;
-  if(oneTime>0) html += `<div class="sum-onetime"><span>One-time setup</span><span class="vl">${money(oneTime)}</span></div>`;
+
   const notes = [];
   if(hasMeta) notes.push("Ad spend billed separately by Meta");
   notes.push("Software subscriptions billed by provider");
